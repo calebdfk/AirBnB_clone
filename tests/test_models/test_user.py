@@ -1,192 +1,202 @@
 #!/usr/bin/python3
 """
-Module for User class
+Module for testing Review
 """
 import os
 import models
 import unittest
 from datetime import datetime
 from time import sleep
-from models.user import User
+from models.review import Review
 
 
-class TestUser_instantiation(unittest.TestCase):
+class TestReview_instantiation(unittest.TestCase):
     """
-    Unittests for testing instantiation of the User class.
+    Unittests for testing instantiation of the Review class.
     """
 
     def test_no_args_instantiates(self):
-        self.assertEqual(User, type(User()))
+        self.assertEqual(Review, type(Review()))
 
     def test_new_instance_stored_in_objects(self):
-        self.assertIn(User(), models.storage.all().values())
+        self.assertIn(Review(), models.storage.all().values())
 
     def test_id_is_public_str(self):
-        self.assertEqual(str, type(User().id))
+        self.assertEqual(str, type(Review().id))
 
     def test_created_at_is_public_datetime(self):
-        self.assertEqual(datetime, type(User().created_at))
+        self.assertEqual(datetime, type(Review().created_at))
 
     def test_updated_at_is_public_datetime(self):
-        self.assertEqual(datetime, type(User().updated_at))
+        self.assertEqual(datetime, type(Review().updated_at))
 
-    def test_email_is_public_str(self):
-        self.assertEqual(str, type(User.email))
+    def test_place_id_is_public_class_attribute(self):
+        review = Review()
+        self.assertEqual(str, type(Review.place_id))
+        self.assertIn("place_id", dir(review))
+        self.assertNotIn("place_id", review.__dict__)
 
-    def test_password_is_public_str(self):
-        self.assertEqual(str, type(User.password))
+    def test_user_id_is_public_class_attribute(self):
+        review = Review()
+        self.assertEqual(str, type(Review.user_id))
+        self.assertIn("user_id", dir(review))
+        self.assertNotIn("user_id", review.__dict__)
 
-    def test_first_name_is_public_str(self):
-        self.assertEqual(str, type(User.first_name))
+    def test_text_is_public_class_attribute(self):
+        review = Review()
+        self.assertEqual(str, type(Review.text))
+        self.assertIn("text", dir(review))
+        self.assertNotIn("text", review.__dict__)
 
-    def test_last_name_is_public_str(self):
-        self.assertEqual(str, type(User.last_name))
+    def test_two_reviews_unique_ids(self):
+        review1 = Review()
+        review2 = Review()
+        self.assertNotEqual(review1.id, review2.id)
 
-    def test_two_users_unique_ids(self):
-        user1 = User()
-        user2 = User()
-        self.assertNotEqual(user1.id, user2.id)
-
-    def test_two_users_different_created_at(self):
-        user1 = User()
+    def test_two_reviews_different_created_at(self):
+        review1 = Review()
         sleep(0.05)
-        user2 = User()
-        self.assertLess(user1.created_at, user2.created_at)
+        review2 = Review()
+        self.assertLess(review1.created_at, review2.created_at)
 
-    def test_two_users_different_updated_at(self):
-        user1 = User()
+    def test_two_reviews_different_updated_at(self):
+        review1 = Review()
         sleep(0.05)
-        user2 = User()
-        self.assertLess(user1.updated_at, user2.updated_at)
+        review2 = Review()
+        self.assertLess(review1.updated_at, review2.updated_at)
 
     def test_str_representation(self):
         my_date = datetime.today()
         my_date_repr = repr(my_date)
-        user1 = User()
-        user1.id = "777777"
-        user1.created_at = user1.updated_at = my_date
-        user1_str = user1.__str__()
-        self.assertIn("[User] (777777)", user1_str)
-        self.assertIn("'id': '777777'", user1_str)
-        self.assertIn("'created_at': " + my_date_repr, user1_str)
-        self.assertIn("'updated_at': " + my_date_repr, user1_str)
+        review = Review()
+        review.id = "777777"
+        review.created_at = review.updated_at = my_date
+        review_str = review.__str__()
+        self.assertIn("[Review] (777777)", review_str)
+        self.assertIn("'id': '777777'", review_str)
+        self.assertIn("'created_at': " + my_date_repr, review_str)
+        self.assertIn("'updated_at': " + my_date_repr, review_str)
 
     def test_args_unused(self):
-        user1 = User(None)
-        self.assertNotIn(None, user1.__dict__.values())
+        review = Review(None)
+        self.assertNotIn(None, review.__dict__.values())
 
     def test_instantiation_with_kwargs(self):
         my_date = datetime.today()
         my_date_iso = my_date.isoformat()
-        user1 = User(id="777", created_at=my_date_iso, updated_at=my_date_iso)
-        self.assertEqual(user1.id, "777")
-        self.assertEqual(user1.created_at, my_date)
-        self.assertEqual(user1.updated_at, my_date)
+        review = Review(id="777", created_at=my_date_iso, updated_at=my_date_iso)
+        self.assertEqual(review.id, "777")
+        self.assertEqual(review.created_at, my_date)
+        self.assertEqual(review.updated_at, my_date)
 
     def test_instantiation_with_None_kwargs(self):
         with self.assertRaises(TypeError):
-            User(id=None, created_at=None, updated_at=None)
+            Review(id=None, created_at=None, updated_at=None)
 
 
-class TestUser_save(unittest.TestCase):
-    """Unittests for testing save method of the  class."""
+class TestReview_save(unittest.TestCase):
+    """
+    Unittests for testing save method of the Review class.
+    """
 
     @classmethod
     def setUp(self):
         try:
-            os.rename("file.json", "tmp")
-        except IOError:
+            os.rename("file.json", "tmp.json")
+        except FileNotFoundError:
             pass
 
     def tearDown(self):
         try:
             os.remove("file.json")
-        except IOError:
+        except FileNotFoundError:
             pass
         try:
-            os.rename("tmp", "file.json")
-        except IOError:
+            os.rename("tmp.json", "file.json")
+        except FileNotFoundError:
             pass
 
     def test_one_save(self):
-        us = User()
+        review = Review()
         sleep(0.05)
-        first_updated_at = us.updated_at
-        us.save()
-        self.assertLess(first_updated_at, us.updated_at)
+        first_updated_at = review.updated_at
+        review.save()
+        self.assertLess(first_updated_at, review.updated_at)
 
     def test_two_saves(self):
-        us = User()
+        review = Review()
         sleep(0.05)
-        first_updated_at = us.updated_at
-        us.save()
-        second_updated_at = us.updated_at
+        first_updated_at = review.updated_at
+        review.save()
+        second_updated_at = review.updated_at
         self.assertLess(first_updated_at, second_updated_at)
         sleep(0.05)
-        us.save()
-        self.assertLess(second_updated_at, us.updated_at)
+        review.save()
+        self.assertLess(second_updated_at, review.updated_at)
 
     def test_save_with_arg(self):
-        us = User()
+        review = Review()
         with self.assertRaises(TypeError):
-            us.save(None)
+            review.save(None)
 
     def test_save_updates_file(self):
-        us = User()
-        us.save()
-        usid = "User." + us.id
+        review = Review()
+        review.save()
+        review_id = "Review." + review.id
         with open("file.json", "r") as f:
-            self.assertIn(usid, f.read())
+            self.assertIn(review_id, f.read())
 
 
-class TestUser_to_dict(unittest.TestCase):
-    """Unittests for testing to_dict method of the User class."""
+class TestReview_to_dict(unittest.TestCase):
+    """
+    Unittests for testing to_dict method of the Review class.
+    """
 
     def test_to_dict_type(self):
-        self.assertTrue(dict, type(User().to_dict()))
+        self.assertTrue(dict, type(Review().to_dict()))
 
     def test_to_dict_contains_correct_keys(self):
-        us = User()
-        self.assertIn("id", us.to_dict())
-        self.assertIn("created_at", us.to_dict())
-        self.assertIn("updated_at", us.to_dict())
-        self.assertIn("__class__", us.to_dict())
+        review = Review()
+        self.assertIn("id", review.to_dict())
+        self.assertIn("created_at", review.to_dict())
+        self.assertIn("updated_at", review.to_dict())
+        self.assertIn("__class__", review.to_dict())
 
     def test_to_dict_contains_added_attributes(self):
-        us = User()
-        us.middle_name = "Holberton"
-        us.my_number = 98
-        self.assertEqual("Holberton", us.middle_name)
-        self.assertIn("my_number", us.to_dict())
+        review = Review()
+        review.middle_name = "Johnson"
+        review.my_number = 777
+        self.assertEqual("Johnson", review.middle_name)
+        self.assertIn("my_number", review.to_dict())
 
     def test_to_dict_datetime_attributes_are_strs(self):
-        us = User()
-        us_dict = us.to_dict()
-        self.assertEqual(str, type(us_dict["id"]))
-        self.assertEqual(str, type(us_dict["created_at"]))
-        self.assertEqual(str, type(us_dict["updated_at"]))
+        review = Review()
+        review_dict = review.to_dict()
+        self.assertEqual(str, type(review_dict["id"]))
+        self.assertEqual(str, type(review_dict["created_at"]))
+        self.assertEqual(str, type(review_dict["updated_at"]))
 
     def test_to_dict_output(self):
         my_date = datetime.today()
-        us = User()
-        us.id = "777777"
-        us.created_at = us.updated_at = my_date
-        tdict = {
+        review = Review()
+        review.id = "777777"
+        review.created_at = review.updated_at = my_date
+        to_dict = {
             'id': '777777',
-            '__class__': 'User',
+            '__class__': 'Review',
             'created_at': my_date.isoformat(),
             'updated_at': my_date.isoformat(),
         }
-        self.assertDictEqual(us.to_dict(), tdict)
+        self.assertDictEqual(review.to_dict(), to_dict)
 
     def test_contrast_to_dict_dunder_dict(self):
-        us = User()
-        self.assertNotEqual(us.to_dict(), us.__dict__)
+        review = Review()
+        self.assertNotEqual(review.to_dict(), review.__dict__)
 
     def test_to_dict_with_arg(self):
-        us = User()
+        review = Review()
         with self.assertRaises(TypeError):
-            us.to_dict(None)
+            review.to_dict(None)
 
 
 if __name__ == "__main__":
